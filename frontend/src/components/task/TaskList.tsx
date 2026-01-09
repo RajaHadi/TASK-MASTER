@@ -1,4 +1,4 @@
-import type { Task } from '@/types';
+import type { Task } from '@/src/types';
 import { TaskItem } from './TaskItem';
 
 export interface TaskListProps {
