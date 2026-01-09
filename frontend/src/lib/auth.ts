@@ -129,9 +129,8 @@ export async function signUpWithBetterAuth(email: string, password: string) {
     }
 
     // Get user and session from result
-    if (result.data?.user && result.data?.session) {
+    if (result.data?.user) {
       const backendUser = result.data.user;
-      const session = result.data.session;
 
       const user: User = {
         id: backendUser.id,
@@ -143,8 +142,8 @@ export async function signUpWithBetterAuth(email: string, password: string) {
 
       setUser(user);
 
-      // Get JWT token from session
-      const token = session.token || '';
+      // Get JWT token from result data
+      const token = result.data.token || '';
       if (token) {
         setToken(token);
       }
@@ -172,9 +171,8 @@ export async function signInWithBetterAuth(email: string, password: string) {
     }
 
     // Get user and session from result
-    if (result.data?.user && result.data?.session) {
+    if (result.data?.user) {
       const backendUser = result.data.user;
-      const session = result.data.session;
 
       const user: User = {
         id: backendUser.id,
@@ -186,8 +184,8 @@ export async function signInWithBetterAuth(email: string, password: string) {
 
       setUser(user);
 
-      // Get JWT token from session
-      const token = session.token || '';
+      // Get JWT token from result data
+      const token = result.data.token || '';
       if (token) {
         setToken(token);
       }
