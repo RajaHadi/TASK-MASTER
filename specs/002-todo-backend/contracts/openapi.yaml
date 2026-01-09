@@ -1,0 +1,522 @@
+openapi: 3.0.3
+info:
+  title: Todo Backend API
+  description: |
+    RESTful API for multi-user Todo application with JWT authentication.
+
+    **Security**: All endpoints require valid JWT token in Authorization header.
+    **User Isolation**: Users can only access their own tasks.
+
+    **Base URL**: `http://localhost:8000`
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/yourusername/my-fullstack-todo
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.production.com
+    description: Production server (future)
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/tasks:
+    get:
+      summary: Get all tasks for authenticated user
+      description: |
+        Retrieves a list of all tasks owned by the authenticated user.
+        Tasks are ordered by creation date (newest first).
+      operationId: listTasks
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+              examples:
+                with_tasks:
+                  summary: User with tasks
+                  value:
+                    tasks:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        title: "Complete project documentation"
+                        status: "pending"
+                        user_id: "123e4567-e89b-12d3-a456-426614174000"
+                        created_at: "2026-01-06T10:30:00Z"
+                        updated_at: "2026-01-06T10:30:00Z"
+                      - id: "660e8400-e29b-41d4-a716-446655440001"
+                        title: "Review pull requests"
+                        status: "completed"
+                        user_id: "123e4567-e89b-12d3-a456-426614174000"
+                        created_at: "2026-01-05T14:20:00Z"
+                        updated_at: "2026-01-06T09:15:00Z"
+                empty_list:
+                  summary: User with no tasks
+                  value:
+                    tasks: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a new task
+      description: |
+        Creates a new task for the authenticated user.
+        The task is automatically associated with the user ID from the JWT token.
+        Initial status is set to "pending".
+      operationId: createTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            examples:
+              simple_task:
+                summary: Simple task
+                value:
+                  title: "Buy groceries"
+              detailed_task:
+                summary: Detailed task
+                value:
+                  title: "Prepare Q1 2026 financial report and send to stakeholders"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "770e8400-e29b-41d4-a716-446655440002"
+                title: "Buy groceries"
+                status: "pending"
+                user_id: "123e4567-e89b-12d3-a456-426614174000"
+                created_at: "2026-01-06T11:45:00Z"
+                updated_at: "2026-01-06T11:45:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+
+    get:
+      summary: Get a specific task by ID
+      description: |
+        Retrieves a single task by its ID.
+        Returns 404 if task doesn't exist or belongs to another user.
+      operationId: getTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                title: "Complete project documentation"
+                status: "pending"
+                user_id: "123e4567-e89b-12d3-a456-426614174000"
+                created_at: "2026-01-06T10:30:00Z"
+                updated_at: "2026-01-06T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update task details
+      description: |
+        Updates the task title (full replacement).
+        Task status is not modified by this endpoint (use PATCH for status changes).
+        Returns 404 if task doesn't exist or 403 if task belongs to another user.
+      operationId: updateTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            example:
+              title: "Complete project documentation with examples"
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                title: "Complete project documentation with examples"
+                status: "pending"
+                user_id: "123e4567-e89b-12d3-a456-426614174000"
+                created_at: "2026-01-06T10:30:00Z"
+                updated_at: "2026-01-06T12:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update task status
+      description: |
+        Updates the task status (partial update).
+        Supports toggling between "pending" and "completed".
+        Returns 404 if task doesn't exist or 403 if task belongs to another user.
+      operationId: patchTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPatch'
+            examples:
+              mark_completed:
+                summary: Mark as completed
+                value:
+                  status: "completed"
+              mark_pending:
+                summary: Mark as pending
+                value:
+                  status: "pending"
+      responses:
+        '200':
+          description: Task status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                title: "Complete project documentation"
+                status: "completed"
+                user_id: "123e4567-e89b-12d3-a456-426614174000"
+                created_at: "2026-01-06T10:30:00Z"
+                updated_at: "2026-01-06T12:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a task
+      description: |
+        Permanently deletes a task.
+        Returns 404 if task doesn't exist or 403 if task belongs to another user.
+        This operation is irreversible.
+      operationId: deleteTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Task deleted successfully"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: |
+        Returns API health status. Does not require authentication.
+        Useful for deployment health checks and monitoring.
+      operationId: healthCheck
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-01-06T12:00:00Z"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token issued by Better Auth.
+        Include in Authorization header: `Authorization: Bearer <token>`
+
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      description: UUID of the task
+      schema:
+        type: string
+        format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Task title or description
+          example: "Complete project documentation"
+
+    TaskUpdate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Updated task title
+          example: "Complete project documentation with examples"
+
+    TaskPatch:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+          description: Task completion status
+          example: "completed"
+
+    TaskResponse:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - user_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          description: Task title
+          example: "Complete project documentation"
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+          description: Task completion status
+          example: "pending"
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user who owns this task
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was created
+          example: "2026-01-06T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was last updated
+          example: "2026-01-06T10:30:00Z"
+
+    TaskListResponse:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskResponse'
+          description: Array of tasks owned by the authenticated user
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+              example: "INVALID_TOKEN"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Authentication token is invalid or expired"
+            details:
+              type: object
+              nullable: true
+              description: Additional error details (optional)
+
+  responses:
+    BadRequest:
+      description: Invalid request payload or validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation_error:
+              summary: Validation failed
+              value:
+                error:
+                  code: "VALIDATION_ERROR"
+                  message: "Title cannot be empty or exceed 500 characters"
+                  details: null
+            missing_field:
+              summary: Missing required field
+              value:
+                error:
+                  code: "MISSING_FIELD"
+                  message: "Field 'title' is required"
+                  details: null
+
+    Unauthorized:
+      description: Missing, invalid, or expired authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_token:
+              summary: No token provided
+              value:
+                error:
+                  code: "MISSING_TOKEN"
+                  message: "Authentication token is required"
+                  details: null
+            invalid_token:
+              summary: Invalid token format
+              value:
+                error:
+                  code: "INVALID_TOKEN"
+                  message: "Authentication token is invalid or expired"
+                  details: null
+            expired_token:
+              summary: Token expired
+              value:
+                error:
+                  code: "EXPIRED_TOKEN"
+                  message: "Authentication token has expired"
+                  details: null
+
+    Forbidden:
+      description: Valid authentication but insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "FORBIDDEN"
+              message: "You do not have permission to access this resource"
+              details: null
+
+    NotFound:
+      description: Resource not found or does not belong to the authenticated user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "Task not found"
+              details: null
+
+    ServiceUnavailable:
+      description: Service temporarily unavailable (database connection failure)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "SERVICE_UNAVAILABLE"
+              message: "Service is temporarily unavailable. Please try again later."
+              details: null
+
+tags:
+  - name: Tasks
+    description: Task management operations
+  - name: System
+    description: System health and status endpoints
