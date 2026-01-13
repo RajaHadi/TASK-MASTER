@@ -18,6 +18,7 @@ class User(SQLModel, table=True):
 
     id: UUID = Field(primary_key=True)
     email: str = Field(max_length=255, unique=True, nullable=False, index=True)
+    hashed_password: str = Field(nullable=False)
     email_verified: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)

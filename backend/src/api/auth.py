@@ -2,20 +2,22 @@
 
 import logging
 from datetime import datetime
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr, Field
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
+from pydantic import BaseModel, EmailStr, Field
 from sqlmodel import Session, select
 
 from ..config import settings
-from ..db.session import get_session
+from ..db.session import get_session as db_get_session
 from ..models.user import User
+from ..auth.security import get_password_hash, verify_password
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth")
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 # Request schemas
@@ -64,7 +66,7 @@ def create_jwt_token(user_id: str, email: str | None = None) -> str:
 
 @router.post("/signup", response_model=AuthResponse)
 @router.post("/sign-up/email", response_model=AuthResponse)
-async def signup(request: SignupRequest, db_session: Session = Depends(get_session)):
+async def signup(request: SignupRequest, db_session: Session = Depends(db_get_session)):
     """
     Create a new user account.
 
@@ -86,6 +88,7 @@ async def signup(request: SignupRequest, db_session: Session = Depends(get_sessi
         user = User(
             id=uuid4(),
             email=request.email,
+            hashed_password=get_password_hash(request.password),
             email_verified=False,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
@@ -102,7 +105,10 @@ async def signup(request: SignupRequest, db_session: Session = Depends(get_sessi
         return AuthResponse(
             user=UserResponse.model_validate(user),
             token=token,
-            session={"userId": str(user.id), "token": token},  # Better Auth expects token in session
+            session={
+                "userId": str(user.id),
+                "token": token,
+            },  # Better Auth expects token in session
         )
 
     except HTTPException:
@@ -118,7 +124,7 @@ async def signup(request: SignupRequest, db_session: Session = Depends(get_sessi
 
 @router.post("/login", response_model=AuthResponse)
 @router.post("/sign-in/email", response_model=AuthResponse)
-async def login(request: LoginRequest, db_session: Session = Depends(get_session)):
+async def login(request: LoginRequest, db_session: Session = Depends(db_get_session)):
     """
     Authenticate user and return JWT token.
 
@@ -127,11 +133,9 @@ async def login(request: LoginRequest, db_session: Session = Depends(get_session
     """
     try:
         # Find user by email
-        user = db_session.exec(
-            select(User).where(User.email == request.email)
-        ).first()
+        user = db_session.exec(select(User).where(User.email == request.email)).first()
 
-        if not user:
+        if not user or not verify_password(request.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
@@ -145,7 +149,10 @@ async def login(request: LoginRequest, db_session: Session = Depends(get_session
         return AuthResponse(
             user=UserResponse.model_validate(user),
             token=token,
-            session={"userId": str(user.id), "token": token},  # Better Auth expects token in session
+            session={
+                "userId": str(user.id),
+                "token": token,
+            },  # Better Auth expects token in session
         )
 
     except HTTPException:
@@ -174,13 +181,18 @@ async def logout():
 @router.get("/get-session", response_model=SessionResponse)
 async def get_session(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    session: Session = Depends(get_session),
+    session: Session = Depends(db_get_session),
 ):
     """
     Get current session.
 
     Requires valid JWT token in Authorization header.
     """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
     try:
         token = credentials.credentials
 
@@ -201,9 +213,7 @@ async def get_session(
             )
 
         # Get user from database
-        user = session.exec(
-            select(User).where(User.id == UUID(user_id))
-        ).first()
+        user = session.exec(select(User).where(User.id == UUID(user_id))).first()
 
         if not user:
             raise HTTPException(
@@ -227,15 +237,11 @@ async def get_session(
 
 
 @router.get("/token")
-async def get_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_token():
     """
     Get current JWT token.
 
     Used by Better Auth client to retrieve the token.
     """
-    try:
-        token = credentials.credentials
-        return {"token": token}
-    except Exception as e:
-        logger.error(f"Token retrieval failed: {str(e)}")
-        return {"token": None}
+
+    return {"token": None}

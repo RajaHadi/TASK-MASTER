@@ -29,27 +29,31 @@ export function TaskForm({ onSubmit, loading }: TaskFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs to be done?"
-          className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-3 border ${
-            error ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : ''
-          }`}
-          disabled={loading}
-        />
+      <div className="flex gap-3 group">
+        <div className="relative flex-grow">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <span className="text-xl">📝</span>
+          </div>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What needs to be done?"
+            className={`block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base py-4 pl-12 border bg-gray-50/50 focus:bg-white text-gray-900 transition-all duration-200 ${
+              error ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : ''
+            }`}
+            disabled={loading}
+          />
+        </div>
         <Button
           type="submit"
           disabled={loading || !title.trim()}
-          className="px-6"
+          className="px-8 py-4 rounded-xl text-base font-medium shadow-sm hover:shadow-md transition-all duration-200"
         >
-          {loading ? <LoadingSpinner size="sm" className="mr-2" /> : null}
-          Add
+          {loading ? <LoadingSpinner size="sm" className="mr-2" /> : 'Add Task'}
         </Button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600" id="email-error">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 pl-1">{error}</p>}
     </form>
   );
 }

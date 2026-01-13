@@ -3,16 +3,17 @@
 import logging
 import sys
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
-from .config import settings
-from .db.session import engine
+
+from .api.auth import router as auth_router
 from .api.health import router as health_router
 from .api.tasks import router as tasks_router
-from .api.auth import router as auth_router
-from .models import User, Task
-
+from .config import settings
+from .db.session import engine
+from .models import Task, User
 
 # Configure logging
 logging.basicConfig(
@@ -73,7 +74,7 @@ app = FastAPI(
 # Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

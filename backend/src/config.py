@@ -2,6 +2,7 @@
 
 import os
 from typing import List
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -18,9 +19,7 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")
 
     # CORS origins (comma-separated list)
-    CORS_ORIGINS: List[str] = os.getenv(
-        "CORS_ORIGINS", "http://localhost:3000"
-    ).split(",")
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "")
 
     # Environment name
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")

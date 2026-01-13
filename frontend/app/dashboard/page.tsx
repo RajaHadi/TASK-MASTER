@@ -2,21 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { requireAuth } from '@/src/lib/auth';
+import { requireAuth, getUser } from '@/src/lib/auth';
 import { api } from '@/src/lib/api-client';
-import type { Task } from '@/src/types';
+import type { Task, User } from '@/src/types';
 import { TaskList } from '@/src/components/task/TaskList';
 import { TaskForm } from '@/src/components/task/TaskForm';
 import { DeleteConfirmation } from '@/src/components/task/DeleteConfirmation';
 import { LoadingSpinner } from '@/src/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/src/components/ui/ErrorMessage';
-import { EmptyState } from '@/src/components/ui/EmptyState';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     requireAuth();
+    setUser(getUser());
   }, [router]);
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -106,6 +107,16 @@ export default function DashboardPage() {
   };
 
   const taskToDelete = deleteTaskId ? tasks.find((t) => t.id === deleteTaskId) : null;
+  
+  // Calculate stats
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === 'completed').length;
+  const pendingTasks = tasks.filter(t => t.status === 'pending').length;
+  
+  // Get user name or default, stripping numbers
+  const emailPrefix = user?.email?.split('@')[0] || 'there';
+  const userNameOnlyAlphabets = emailPrefix.replace(/[^a-zA-Z]/g, '');
+  const formattedName = userNameOnlyAlphabets.charAt(0).toUpperCase() + userNameOnlyAlphabets.slice(1);
 
   if (loading) {
     return (
@@ -134,37 +145,52 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-8 md:flex md:items-center md:justify-between">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold leading-7 text-gray-900 sm:text-4xl sm:truncate">
-              My Tasks
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Manage your daily goals and track your progress.
-            </p>
+        
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-2">
+            Good morning, {formattedName} 👋
+          </h1>
+          <p className="text-gray-500 text-lg">
+            Here&apos;s what you need to get done today.
+          </p>
+        </div>
+
+        {/* Stats Strip */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <span className="text-3xl font-bold text-indigo-600 mb-1">{totalTasks}</span>
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <span className="text-3xl font-bold text-green-600 mb-1">{completedTasks}</span>
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Done</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <span className="text-3xl font-bold text-orange-500 mb-1">{pendingTasks}</span>
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Pending</span>
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6 mb-8 border border-gray-100">
+        {/* Create Task Section */}
+        <div className="bg-white shadow-sm rounded-2xl p-6 mb-8 border border-gray-100">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Create New Task</h2>
           <TaskForm onSubmit={handleCreateTask} loading={creatingTask} />
         </div>
 
+        {/* Task List Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">Task List</h2>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-              {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-            </span>
+            <h2 className="text-xl font-bold text-gray-900">Task List</h2>
           </div>
 
           {tasks.length === 0 ? (
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-12 text-center">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No tasks</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating a new task above.</p>
+            <div className="bg-white shadow-sm rounded-2xl border border-gray-100 p-12 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 mb-4">
+                <span className="text-2xl">🎉</span>
+              </div>
+              <h3 className="mt-2 text-lg font-medium text-gray-900">You&apos;re all caught up!</h3>
+              <p className="mt-1 text-gray-500">Add a task above to stay productive.</p>
             </div>
           ) : (
             <TaskList
