@@ -26,16 +26,16 @@ export function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900 tracking-tight">TaskMaster</span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">TaskMaster</span>
             </Link>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {authenticated && user ? (
               <>
                 <Link 
                   href="/dashboard" 
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors hidden sm:block ${
                     pathname === '/dashboard' 
                       ? 'text-indigo-600 bg-indigo-50 px-3 py-2 rounded-md' 
                       : 'text-gray-500 hover:text-gray-900 px-3 py-2'
@@ -43,28 +43,29 @@ export function Navbar() {
                 >
                   Dashboard
                 </Link>
-                <div className="h-6 w-px bg-gray-200 mx-2" aria-hidden="true" />
+                <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block" aria-hidden="true" />
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 text-indigo-700 font-medium text-sm">
                     {getInitials(user.email)}
                   </div>
                   <Button
                     variant="secondary"
                     onClick={logout}
-                    className="text-xs px-3 py-1.5 border-gray-200 hover:bg-gray-50 text-gray-600"
+                    className="text-xs px-2 py-1.5 sm:px-3 border-gray-200 hover:bg-gray-50 text-gray-600"
                   >
-                    Sign Out
+                    <span className="sm:hidden">Exit</span>
+                    <span className="hidden sm:inline">Sign Out</span>
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Link href="/login">
-                  <Button variant="secondary" className="text-sm">Log in</Button>
+                  <Button variant="secondary" className="text-sm px-3 sm:px-4">Log in</Button>
                 </Link>
                 <Link href="/signup">
-                  <Button className="text-sm">Sign up</Button>
+                  <Button className="text-sm px-3 sm:px-4">Sign up</Button>
                 </Link>
               </div>
             )}

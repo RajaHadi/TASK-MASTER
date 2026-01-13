@@ -157,18 +157,18 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Strip */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-indigo-600 mb-1">{totalTasks}</span>
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-row sm:flex-col items-center justify-between sm:justify-center px-6 sm:px-4">
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide order-last sm:order-first">Total</span>
+            <span className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-0 sm:mb-1">{totalTasks}</span>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-green-600 mb-1">{completedTasks}</span>
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Done</span>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-row sm:flex-col items-center justify-between sm:justify-center px-6 sm:px-4">
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide order-last sm:order-first">Done</span>
+            <span className="text-2xl sm:text-3xl font-bold text-green-600 mb-0 sm:mb-1">{completedTasks}</span>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-orange-500 mb-1">{pendingTasks}</span>
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Pending</span>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-row sm:flex-col items-center justify-between sm:justify-center px-6 sm:px-4">
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide order-last sm:order-first">Pending</span>
+            <span className="text-2xl sm:text-3xl font-bold text-orange-500 mb-0 sm:mb-1">{pendingTasks}</span>
           </div>
         </div>
 

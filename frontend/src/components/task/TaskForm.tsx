@@ -29,7 +29,7 @@ export function TaskForm({ onSubmit, loading }: TaskFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="flex gap-3 group">
+      <div className="flex flex-col sm:flex-row gap-3 group">
         <div className="relative flex-grow">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <span className="text-xl">📝</span>
@@ -48,7 +48,7 @@ export function TaskForm({ onSubmit, loading }: TaskFormProps) {
         <Button
           type="submit"
           disabled={loading || !title.trim()}
-          className="px-8 py-4 rounded-xl text-base font-medium shadow-sm hover:shadow-md transition-all duration-200"
+          className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-medium shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
         >
           {loading ? <LoadingSpinner size="sm" className="mr-2" /> : 'Add Task'}
         </Button>
